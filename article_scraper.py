@@ -1,6 +1,7 @@
 # article_scraper.py
 import os
 import time
+import json 
 from collections import Counter
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -65,12 +66,26 @@ def run_test(cap):
         all_words = " ".join(translated_titles).lower().split()
         repeated = {w: c for w, c in Counter(all_words).items() if c > 2}
         if repeated:
-            print(f"\n🔁 Repeated words (>2 times) on {cap.get('name')}:")
+            print(f"\nRepeated words (>2 times) on {cap.get('name')}:")
             for w, c in repeated.items():
                 print(f"  {w}: {c}")
         else:
-            print(f"\n🔁 No repeated words >2 on {cap.get('name')}")
+            print(f"\nNo repeated words >2 on {cap.get('name')}")
+
+        driver.execute_script(
+            'browserstack_executor: {"action": "setSessionStatus", "arguments": {"status":"passed","reason": "Articles scraped successfully"}}'
+        )
+
+    except Exception as e:
+        print(f" Error during test on {cap.get('name')}: {e}")
+        driver.execute_script(
+            f'browserstack_executor: {{"action": "setSessionStatus", "arguments": {{"status":"failed","reason": "Test failed: {str(e)}"}}}}'
+        )
 
     finally:
-        driver.quit()
-        print(f"Test finished on {cap.get('name')}")
+        try:
+            driver.quit()
+        except Exception as e:
+            print("⚠️ Error quitting driver:", e)
+
+        print(f"✅ Test finished on {cap.get('name')}")
